@@ -1,0 +1,18 @@
+[all:vars]
+ansible_connection=ssh
+ansible_become_method=sudo
+ansible_become=true
+auth_kind=serviceaccount
+service_account_email=<Enter GCP Service Account Name>
+service_account_file=<Enter GCP Credential JSON file>
+project=<Enter GCP Project Name>
+timezone=<Enter Timezone>
+retentionPeriod=<Enter retention period. For example: 4w>
+
+[vmstorage]
+
+[vmselect]
+
+[vminsert]
+
+[grafana]

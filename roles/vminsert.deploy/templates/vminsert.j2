@@ -1,0 +1,1 @@
+VMENV="{% for host in groups['vmstorage'] %} -storageNode={{host}}:8400{% endfor %} -loggerTimezone={{timezone}} -maxLabelsPerTimeseries=50 -memory.allowedPercent=75"

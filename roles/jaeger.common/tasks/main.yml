@@ -1,0 +1,8 @@
+---
+
+- name: Installing common utils
+  ansible.builtin.include_tasks: commonUtils.yml
+
+- name: System tuning tasks
+  ansible.builtin.include_tasks: systemTuning.yml
+

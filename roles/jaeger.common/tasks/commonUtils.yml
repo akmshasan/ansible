@@ -1,0 +1,27 @@
+---
+
+- name: Install Common Utils
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - net-tools
+    - tar
+    - unzip
+    - wget
+    - apt-utils
+    - mlocate
+
+      #- name: install python3* packages and dependencies
+      #ansible.builtin.package:
+      #name: "{{ item }}"
+      #state: latest
+      #loop:
+      #- python3
+      #- python3-pip
+      #- python3-dev
+      #- gcc
+
+- name: disable cron
+  shell:
+    "sudo systemctl disable cron"

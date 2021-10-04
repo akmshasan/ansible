@@ -1,0 +1,27 @@
+- hosts: ct-prod-jaeger-es
+  gather_facts: true # Must be set as True. By default it is set as True if not mentioned 
+  become: yes
+
+  roles:
+    - jaeger.common
+    - jaeger.elasticsearch
+
+  vars:
+    es_version: 7.14.0
+    es_data_dirs:
+      - "/data/elasticsearch/data"
+    es_log_dir: "/data/elasticsearch/logs"
+    es_java_install: true
+    es_heap_size: "8g"
+    es_config:
+      cluster.name: "ChototProdESCluster"
+      cluster.initial_master_nodes: "10.9.28.107,10.9.28.108,10.9.28.109"
+      discovery.seed_hosts: "10.9.28.107:9300,10.9.28.108:9300,10.9.28.109:9300"
+      http.port: 9200
+      node.data: true
+      node.master: true
+      node.ingest: true
+      node.ml: false
+      bootstrap.memory_lock: true
+      indices.recovery.max_bytes_per_sec: 100mb
+      network.host: '0.0.0.0'

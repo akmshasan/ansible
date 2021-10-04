@@ -1,0 +1,229 @@
+---
+- hosts: vmstorage
+  tags: vmstorage
+  tasks:
+  - name: copy over files for service and env
+    import_role:
+      name: vmstorage.deploy
+  - name: Add or modify hard nofile limits for wildcard domain
+    community.general.pam_limits:
+      domain: '*'
+      limit_type: '-'
+      limit_item: nofile
+      value: 1000000
+  - name: set file-max 
+    ansible.posix.sysctl:
+      name: fs.file-max
+      value: 1000000
+      sysctl_set: yes
+      state: present
+      reload: yes
+  - name: create systemd for vmstorage
+    import_role:
+      name: systemd.service
+    vars:
+      systemd_service:
+        vmstorage:
+          service_name: vmstorage
+          enabled: Yes
+          environment_file: "/etc/default/vmstorage"
+          exec_start: "/usr/local/bin/vmstorage-prod $VMENV"
+          exec_stop: "/bin/kill -INT $MAINPID"
+          working_directory: "/opt"
+          user: root
+          group: root
+          restart: "on-failure"
+          wanted_by: "multi-user.target"
+          after: "network.target auditd.service"
+          type: "simple"
+          limit_nofile: "infinity"
+          limit_nproc: "infinity"
+          limit_memlock: "infinity"
+  - name: Restart service vmstorage, in all cases
+    ansible.builtin.service:
+      name: vmstorage
+      state: restarted
+
+- hosts: vminsert
+  tags: vminsert
+  tasks:
+  - name: copy over files for service and env
+    import_role:
+      name: vminsert.deploy
+  - name: Add or modify hard nofile limits for wildcard domain
+    community.general.pam_limits:
+      domain: '*'
+      limit_type: '-'
+      limit_item: nofile
+      value: 1000000
+  - name: set file-max 
+    ansible.posix.sysctl:
+      name: fs.file-max
+      value: 1000000
+      sysctl_set: yes
+      state: present
+      reload: yes
+  - name: create systemd for vminsert
+    import_role:
+      name: systemd.service
+    vars:
+      systemd_service:
+        vminsert:
+          service_name: vminsert
+          enabled: Yes
+          environment_file: "/etc/default/vminsert"
+          exec_start: "/usr/local/bin/vminsert-prod $VMENV"
+          exec_stop: "/bin/kill -INT $MAINPID"
+          working_directory: "/opt"
+          user: root
+          group: root
+          restart: "on-failure"
+          wanted_by: "multi-user.target"
+          after: "network.target auditd.service"
+          type: "simple"
+          limit_nofile: "infinity"
+          limit_nproc: "infinity"
+          limit_memlock: "infinity"
+  - name: Restart service vminsert, in all cases
+    ansible.builtin.service:
+      name: vminsert
+      state: restarted
+
+- hosts: vmselect
+  tags: vmselect
+  tasks:
+  - name: copy over files for service and env
+    import_role:
+      name: vmselect.deploy
+  - name: Add or modify hard nofile limits for wildcard domain
+    community.general.pam_limits:
+      domain: '*'
+      limit_type: '-'
+      limit_item: nofile
+      value: 1000000
+  - name: set file-max 
+    ansible.posix.sysctl:
+      name: fs.file-max
+      value: 1000000
+      sysctl_set: yes
+      state: present
+      reload: yes
+  - name: create systemd for vmselect
+    import_role:
+      name: systemd.service
+    vars:
+      systemd_service:
+        vmselect:
+          service_name: vmselect
+          enabled: Yes
+          environment_file: "/etc/default/vmselect"
+          exec_start: "/usr/local/bin/vmselect-prod $VMENV"
+          exec_stop: "/bin/kill -INT $MAINPID"
+          working_directory: "/opt"
+          user: root
+          group: root
+          restart: "on-failure"
+          wanted_by: "multi-user.target"
+          after: "network.target auditd.service"
+          type: "simple"
+          limit_nofile: "infinity"
+          limit_nproc: "infinity"
+          limit_memlock: "infinity"
+  - name: Restart service vmselect, in all cases
+    ansible.builtin.service:
+      name: vmselect
+      state: restarted
+
+- hosts: grafana
+  tags: grafana
+  vars_prompt:
+    - name: client_id
+      prompt: What client_id to be use for grafana google login?
+      unsafe: yes
+      private: no
+    - name: client_secret
+      prompt: What client_secret to be use for grafana google login?
+      unsafe: yes
+      private: no
+    - name: github_user
+      prompt: What github_user to be use for clone ctf-platform-grafana-stack?
+      unsafe: yes
+      private: no
+    - name: github_token
+      prompt: What github_token to be use for clone ctf-platform-grafana-stack?
+      unsafe: yes
+      private: yes
+  tasks:
+  - name: Add or modify hard nofile limits for wildcard domain
+    community.general.pam_limits:
+      domain: '*'
+      limit_type: '-'
+      limit_item: nofile
+      value: 1000000
+  - name: set file-max 
+    ansible.posix.sysctl:
+      name: fs.file-max
+      value: 1000000
+      sysctl_set: yes
+      state: present
+      reload: yes
+  - name: install docker service with docker-compose
+    import_role:
+      name: docker.install
+    vars:
+      docker_users:
+        - arief_mudah_my
+      docker_daemon_options:
+        log-opts:
+          max-size: "100m"
+          max-file: 1
+  - name: create directory
+    file:
+      path: /opt/secrets/auth_google_oauth
+      state: directory
+      owner: root
+      group: root
+      mode: '0755'
+  - name: create client_id
+    file:
+      path: /opt/secrets/auth_google_oauth/client_id
+      state: touch
+      owner: root
+      group: root
+      mode: '0644'
+  - name: create client_secret
+    file:
+      path: /opt/secrets/auth_google_oauth/client_secret
+      state: touch
+      owner: root
+      group: root
+      mode: '0644'
+  - name: Inserting cliend_id
+    ansible.builtin.copy:
+      content: '{{ client_id }}'
+      dest: /opt/secrets/auth_google_oauth/client_id
+  - name: Inserting cliend_secret
+    ansible.builtin.copy:
+      content: '{{ client_secret }}'
+      dest: /opt/secrets/auth_google_oauth/client_secret
+  - name: Read-write git checkout from github
+    ansible.builtin.git:
+      repo: 'https://{{ github_user|urlencode() }}:{{ github_token|urlencode() }}@github.com/carousell/ctf-platform-grafana-stack.git'
+      dest: /opt/ctf-platform-grafana-stack
+    environment:
+      GIT_TERMINAL_PROMPT: 0
+  - name: install docker pip 
+    import_role:
+      name: docker-pip.install
+    vars:
+      pip_install_packages:
+        - name: docker
+        - name: docker-compose
+  - name: run gcloud auth configure-docker
+    ansible.builtin.shell: gcloud auth configure-docker --quiet
+  - name: Create and start services docker-compose
+    community.docker.docker_compose:
+      project_src: /opt/ctf-platform-grafana-stack/environments/ct-dev
+    register: output
+  - ansible.builtin.debug:
+      var: output

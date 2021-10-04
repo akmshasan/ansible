@@ -1,0 +1,16 @@
+---
+- name: Copy ENV service file to server
+  ansible.builtin.template:
+    src: vmstorage.j2
+    dest: /etc/default/vmstorage
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Copy binary to server
+  copy:
+    src: vmstorage-prod
+    dest: /usr/local/bin
+    mode: 0755
+    owner: root
+    group: root
